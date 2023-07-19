@@ -8,6 +8,7 @@ import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.domain.repository.Not
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.domain.use_case.AddNote
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.domain.use_case.DeleteNote
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.domain.use_case.GetAllNotes
+import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.domain.use_case.GetNoteById
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.domain.use_case.NoteUseCases
 import dagger.Module
 import dagger.Provides
@@ -41,7 +42,8 @@ object NoteModule {
         return NoteUseCases(
             getAllNotes = GetAllNotes(repository),
             deleteNote = DeleteNote(repository),
-            addNote = AddNote(repository)
+            addNote = AddNote(repository),
+            getNoteById = GetNoteById(repository)
         )
     }
 }
