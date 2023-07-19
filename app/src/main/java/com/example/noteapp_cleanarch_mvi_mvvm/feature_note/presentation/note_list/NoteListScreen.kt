@@ -39,6 +39,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.presentation.note_list.components.NoteItem
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.presentation.note_list.components.OrderSection
+import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.presentation.util.Screen
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,7 +57,9 @@ fun NoteListScreen(
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
-                onClick = {},
+                onClick = {
+                          navController.navigate(Screen.AddEditNoteScreen.route)
+                },
                 containerColor = MaterialTheme.colorScheme.primary,
             ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Note")
@@ -112,7 +115,8 @@ fun NoteListScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                // TODO
+                                navController.navigate(Screen.AddEditNoteScreen.route +
+                                "?noteId=${note.id}&noteColor=${note.color}")
                             },
                         onDeleteClick = {
                             viewModel.onEvent(NoteListEvent.DeleteNote(note))

@@ -146,7 +146,7 @@ fun AddEditNoteScreen(
                 },
                 isHintVisible = noteTitle.isHintVisible,
                 singleLine = true,
-                textStyle = MaterialTheme.typography.headlineMedium
+                textStyle = MaterialTheme.typography.headlineSmall
             )
             Spacer(modifier = Modifier.height(16.dp))
             TransparentHintTextField(
@@ -160,7 +160,7 @@ fun AddEditNoteScreen(
                 },
                 isHintVisible = noteContent.isHintVisible,
                 singleLine = false,
-                textStyle = MaterialTheme.typography.headlineMedium,
+                textStyle = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.fillMaxHeight()
             )
         }
