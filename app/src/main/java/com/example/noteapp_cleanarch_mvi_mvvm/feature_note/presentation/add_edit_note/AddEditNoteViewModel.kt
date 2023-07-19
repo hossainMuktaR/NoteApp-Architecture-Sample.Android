@@ -3,6 +3,7 @@ package com.example.noteapp_cleanarch_mvi_mvvm.feature_note.presentation.add_edi
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.focus.FocusState
 import androidx.compose.ui.graphics.toArgb
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -37,9 +38,6 @@ class AddEditNoteViewModel @Inject constructor(
     private val _noteColor = mutableIntStateOf(Note.noteColors.random().toArgb())
     val noteColor: State<Int> = _noteColor
 
-    private val _eventFlow = MutableSharedFlow<UiEvent>()
-    val eventFlow: SharedFlow<UiEvent> = _eventFlow.asSharedFlow()
-
     private var currentNoteId: Int? = null
 
     init {
@@ -64,57 +62,42 @@ class AddEditNoteViewModel @Inject constructor(
         }
     }
 
-    fun onEvent(event: AddEditNoteEvent){
-        when(event){
-            is AddEditNoteEvent.ChangeColor -> {
-                _noteColor.value = event.color
-            }
-            is AddEditNoteEvent.ChangeContentFocus -> {
-                _noteContent.value = noteContent.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
-                            noteContent.value.text.isBlank()
-                )
-            }
-            is AddEditNoteEvent.ChangeTitleFocus ->{
-                _noteTitle.value = noteTitle.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
-                            noteTitle.value.text.isBlank()
-                )
-            }
-            is AddEditNoteEvent.EnterContent -> {
-                _noteContent.value = noteContent.value.copy(
-                    text = event.value
-                )
-            }
-            is AddEditNoteEvent.EnterTitle -> {
-                _noteTitle.value = noteTitle.value.copy(
-                    text = event.value
-                )
-            }
-            AddEditNoteEvent.SaveNote -> {
-                viewModelScope.launch {
-                    try {
-                        noteUseCases.addNote(
-                            Note(
-                                title = noteTitle.value.text,
-                                content = noteContent.value.text,
-                                color = noteColor.value,
-                                timeStamp = System.currentTimeMillis(),
-                                id = currentNoteId
-                            )
-                        )
-                        _eventFlow.emit(UiEvent.SaveNote)
-                    } catch (e: InvalidNoteException){
-                        _eventFlow.emit(UiEvent.ShowSnackbar(
-                            message = e.message ?: "Couldn't Save Note"
-                        ))
-                    }
-                }
-            }
-        }
+    fun enterTitle(value: String){
+        _noteTitle.value = noteTitle.value.copy(
+            text = value
+        )
     }
-    sealed class UiEvent{
-        data class ShowSnackbar(val message: String): UiEvent()
-        object SaveNote: UiEvent()
+    fun changeTitleFocus(focusState: FocusState){
+        _noteTitle.value = noteTitle.value.copy(
+            isHintVisible = !focusState.isFocused &&
+                    noteTitle.value.text.isBlank()
+        )
+    }
+    fun enterContent(value: String){
+        _noteContent.value = noteContent.value.copy(
+            text = value
+        )
+    }
+    fun changeContentFocus(focusState: FocusState){
+        _noteContent.value = noteContent.value.copy(
+            isHintVisible = !focusState.isFocused &&
+                    noteContent.value.text.isBlank()
+        )
+    }
+    fun changeColor(color: Int){
+        _noteColor.value = color
+    }
+    fun saveNote(){
+        viewModelScope.launch {
+                noteUseCases.addNote(
+                    Note(
+                        title = noteTitle.value.text,
+                        content = noteContent.value.text,
+                        color = noteColor.value,
+                        timeStamp = System.currentTimeMillis(),
+                        id = currentNoteId
+                    )
+                )
+        }
     }
 }

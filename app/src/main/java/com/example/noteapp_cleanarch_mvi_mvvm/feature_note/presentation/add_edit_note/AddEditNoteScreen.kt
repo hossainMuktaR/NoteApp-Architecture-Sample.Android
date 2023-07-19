@@ -38,7 +38,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.domain.model.InvalidNoteException
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.domain.model.Note
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.presentation.add_edit_note.components.TransparentHintTextField
 import kotlinx.coroutines.flow.collectLatest
@@ -66,24 +68,18 @@ fun AddEditNoteScreen(
     }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(true){
-        viewModel.eventFlow.collectLatest { uiEvent ->
-            when(uiEvent){
-                AddEditNoteViewModel.UiEvent.SaveNote -> {
-                    navController.navigateUp()
-                }
-                is AddEditNoteViewModel.UiEvent.ShowSnackbar ->{
-                    snackbarHostState.showSnackbar(uiEvent.message)
-                }
-            }
-        }
-    }
-
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    viewModel.onEvent(AddEditNoteEvent.SaveNote)
+                    try {
+                        viewModel.saveNote()
+                        navController.navigateUp()
+                    } catch (e: InvalidNoteException) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(e.message ?: "Couldn't save note")
+                        }
+                    }
                 },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
@@ -129,7 +125,7 @@ fun AddEditNoteScreen(
                                         )
                                     )
                                 }
-                                viewModel.onEvent(AddEditNoteEvent.ChangeColor(colorInt))
+                                viewModel.changeColor(colorInt)
                             }
                     )
                 }
@@ -138,11 +134,11 @@ fun AddEditNoteScreen(
             TransparentHintTextField(
                 text = noteTitle.text,
                 hint = noteTitle.hint,
-                onValueChange = {
-                    viewModel.onEvent(AddEditNoteEvent.EnterTitle(it))
+                onValueChange = { value ->
+                    viewModel.enterTitle(value)
                 },
-                onFocusChange = {
-                    viewModel.onEvent(AddEditNoteEvent.ChangeTitleFocus(it))
+                onFocusChange = { focusState ->
+                    viewModel.changeTitleFocus(focusState)
                 },
                 isHintVisible = noteTitle.isHintVisible,
                 singleLine = true,
@@ -152,11 +148,11 @@ fun AddEditNoteScreen(
             TransparentHintTextField(
                 text = noteContent.text,
                 hint = noteContent.hint,
-                onValueChange = {
-                    viewModel.onEvent(AddEditNoteEvent.EnterContent(it))
+                onValueChange = { value ->
+                    viewModel.enterContent(value)
                 },
-                onFocusChange = {
-                    viewModel.onEvent(AddEditNoteEvent.ChangeContentFocus(it))
+                onFocusChange = { foucusState ->
+                    viewModel.changeContentFocus(foucusState)
                 },
                 isHintVisible = noteContent.isHintVisible,
                 singleLine = false,
