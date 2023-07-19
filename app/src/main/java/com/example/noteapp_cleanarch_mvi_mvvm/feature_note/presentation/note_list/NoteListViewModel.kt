@@ -30,37 +30,32 @@ class NoteListViewModel @Inject constructor(
         getAllNotes(NoteOrder.Date(OrderType.Descending))
     }
 
-    fun onEvent(event: NoteListEvent) {
-        when (event) {
-            is NoteListEvent.DeleteNote -> {
-                viewModelScope.launch {
-                    noteUseCases.deleteNote(event.note)
-                    recentlyDeletedNote = event.note
-                }
-            }
-
-            is NoteListEvent.Order -> {
-                if (state.value.noteOrder::class == event.noteOrder::class &&
-                    state.value.noteOrder.orderType == event.noteOrder.orderType
-                ) {
-                    return
-                }
-                getAllNotes(event.noteOrder)
-            }
-
-            NoteListEvent.RestoreNote -> {
-                viewModelScope.launch {
-                    noteUseCases.addNote(recentlyDeletedNote ?: return@launch)
-                    recentlyDeletedNote = null
-                }
-            }
-
-            NoteListEvent.ToggleOrderSection -> {
-                _state.value = state.value.copy(
-                    isOrderSectionVisible = !state.value.isOrderSectionVisible
-                )
-            }
+    fun deleteNote(note: Note){
+        viewModelScope.launch {
+            noteUseCases.deleteNote(note)
+            recentlyDeletedNote = note
         }
+    }
+
+    fun toggleOrderSection(){
+        _state.value = state.value.copy(
+            isOrderSectionVisible = !state.value.isOrderSectionVisible
+        )
+    }
+
+    fun restoreNote(){
+        viewModelScope.launch {
+            noteUseCases.addNote(recentlyDeletedNote ?: return@launch)
+            recentlyDeletedNote = null
+        }
+    }
+    fun orderNoteList(noteOrder: NoteOrder){
+        if (state.value.noteOrder::class == noteOrder::class &&
+            state.value.noteOrder.orderType == noteOrder.orderType
+        ) {
+            return
+        }
+        getAllNotes(noteOrder)
     }
 
     private fun getAllNotes(noteOrder: NoteOrder) {
