@@ -72,12 +72,14 @@ fun AddEditNoteScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    try {
-                        viewModel.saveNote()
-                        navController.navigateUp()
-                    } catch (e: InvalidNoteException) {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(e.message ?: "Couldn't save note")
+                    scope.launch {
+                        try {
+                            viewModel.saveNote()
+                            navController.navigateUp()
+                        } catch (e: InvalidNoteException) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(e.message ?: "Couldn't save note")
+                            }
                         }
                     }
                 },

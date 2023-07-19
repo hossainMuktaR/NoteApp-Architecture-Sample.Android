@@ -23,16 +23,20 @@ import javax.inject.Inject
 class AddEditNoteViewModel @Inject constructor(
     private val noteUseCases: NoteUseCases,
     savedStateHandle: SavedStateHandle
-): ViewModel(){
+) : ViewModel() {
 
-    private val _noteTitle = mutableStateOf(NoteTextFieldState(
-        hint = "Enter title here..."
-    ))
+    private val _noteTitle = mutableStateOf(
+        NoteTextFieldState(
+            hint = "Enter title here..."
+        )
+    )
     val noteTitle: State<NoteTextFieldState> = _noteTitle
 
-    private val _noteContent = mutableStateOf(NoteTextFieldState(
-        hint = "Enter Note Content Here....."
-    ))
+    private val _noteContent = mutableStateOf(
+        NoteTextFieldState(
+            hint = "Enter Note Content Here....."
+        )
+    )
     val noteContent: State<NoteTextFieldState> = _noteContent
 
     private val _noteColor = mutableIntStateOf(Note.noteColors.random().toArgb())
@@ -42,7 +46,7 @@ class AddEditNoteViewModel @Inject constructor(
 
     init {
         savedStateHandle.get<Int>("noteId")?.let { noteId ->
-            if(noteId != -1){
+            if (noteId != -1) {
                 viewModelScope.launch {
                     noteUseCases.getNoteById(noteId)?.also { note ->
                         currentNoteId = note.id
@@ -62,42 +66,45 @@ class AddEditNoteViewModel @Inject constructor(
         }
     }
 
-    fun enterTitle(value: String){
+    fun enterTitle(value: String) {
         _noteTitle.value = noteTitle.value.copy(
             text = value
         )
     }
-    fun changeTitleFocus(focusState: FocusState){
+
+    fun changeTitleFocus(focusState: FocusState) {
         _noteTitle.value = noteTitle.value.copy(
             isHintVisible = !focusState.isFocused &&
                     noteTitle.value.text.isBlank()
         )
     }
-    fun enterContent(value: String){
+
+    fun enterContent(value: String) {
         _noteContent.value = noteContent.value.copy(
             text = value
         )
     }
-    fun changeContentFocus(focusState: FocusState){
+
+    fun changeContentFocus(focusState: FocusState) {
         _noteContent.value = noteContent.value.copy(
             isHintVisible = !focusState.isFocused &&
                     noteContent.value.text.isBlank()
         )
     }
-    fun changeColor(color: Int){
+
+    fun changeColor(color: Int) {
         _noteColor.value = color
     }
-    fun saveNote(){
-        viewModelScope.launch {
-                noteUseCases.addNote(
-                    Note(
-                        title = noteTitle.value.text,
-                        content = noteContent.value.text,
-                        color = noteColor.value,
-                        timeStamp = System.currentTimeMillis(),
-                        id = currentNoteId
-                    )
-                )
-        }
+
+    suspend fun saveNote() {
+        noteUseCases.addNote(
+            Note(
+                title = noteTitle.value.text,
+                content = noteContent.value.text,
+                color = noteColor.value,
+                timeStamp = System.currentTimeMillis(),
+                id = currentNoteId
+            )
+        )
     }
 }
