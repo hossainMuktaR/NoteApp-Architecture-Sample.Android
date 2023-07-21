@@ -30,6 +30,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -40,6 +41,7 @@ import androidx.navigation.NavController
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.presentation.note_list.components.NoteItem
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.presentation.note_list.components.OrderSection
 import com.example.noteapp_cleanarch_mvi_mvvm.feature_note.presentation.util.Screen
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,12 +55,36 @@ fun NoteListScreen(
     val hostState = remember {
         SnackbarHostState()
     }
+    LaunchedEffect(true) {
+        viewModel.uiIntentFlow.collectLatest { uiIntent ->
+            when (uiIntent) {
+                is UiIntent.GoNoteEditScreen -> {
+                    navController.navigate(
+                        Screen.AddEditNoteScreen.route +
+                                "?noteId=${uiIntent.noteId}&noteColor=${uiIntent.noteColor}"
+                    )
+                }
+
+                is UiIntent.DeleteNote -> {
+                    scope.launch {
+                        val result = hostState.showSnackbar(
+                            message = uiIntent.message,
+                            actionLabel = "Undo"
+                        )
+                        if (result == SnackbarResult.ActionPerformed) {
+                            viewModel.onIntent(ViewModelIntent.RestoreNote)
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                          navController.navigate(Screen.AddEditNoteScreen.route)
+                    navController.navigate(Screen.AddEditNoteScreen.route)
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
             ) {
@@ -81,7 +107,7 @@ fun NoteListScreen(
                 Text(text = "Your Note", style = MaterialTheme.typography.headlineMedium)
                 IconButton(
                     onClick = {
-                        viewModel.onEvent(NoteListEvent.ToggleOrderSection)
+                        viewModel.onIntent(ViewModelIntent.ToggleOrderSection)
                     },
                 ) {
                     Icon(
@@ -101,34 +127,29 @@ fun NoteListScreen(
                         .padding(vertical = 16.dp),
                     noteOrder = state.noteOrder,
                     onOrderChange = { selectedNoteOrder ->
-                        viewModel.onEvent(NoteListEvent.Order(selectedNoteOrder))
+                        viewModel.onIntent(ViewModelIntent.Order(selectedNoteOrder))
                     }
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn(
                 modifier = Modifier.fillMaxSize()
-            ){
-                items(state.notes){ note ->
+            ) {
+                items(state.notes) { note ->
                     NoteItem(
                         note = note,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                navController.navigate(Screen.AddEditNoteScreen.route +
-                                "?noteId=${note.id}&noteColor=${note.color}")
+                                viewModel.onIntent(
+                                    ViewModelIntent.GoNoteUpdateScreen(
+                                        note.id!!.toInt(),
+                                        note.color
+                                    )
+                                )
                             },
                         onDeleteClick = {
-                            viewModel.onEvent(NoteListEvent.DeleteNote(note))
-                            scope.launch {
-                                val result = hostState.showSnackbar(
-                                    message = "Note Deleted",
-                                    actionLabel = "Undo"
-                                )
-                                if(result == SnackbarResult.ActionPerformed){
-                                    viewModel.onEvent(NoteListEvent.RestoreNote)
-                                }
-                            }
+                            viewModel.onIntent(ViewModelIntent.DeleteNote(note))
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))

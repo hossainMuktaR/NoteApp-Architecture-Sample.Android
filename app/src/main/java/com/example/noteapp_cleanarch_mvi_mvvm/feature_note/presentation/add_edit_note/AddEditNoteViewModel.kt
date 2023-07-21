@@ -14,7 +14,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -37,8 +36,8 @@ class AddEditNoteViewModel @Inject constructor(
     private val _noteColor = mutableIntStateOf(Note.noteColors.random().toArgb())
     val noteColor: State<Int> = _noteColor
 
-    private val _eventFlow = MutableSharedFlow<UiEvent>()
-    val eventFlow: SharedFlow<UiEvent> = _eventFlow.asSharedFlow()
+    private val _uiIntentFlow = MutableSharedFlow<UiIntent>()
+    val uiIntentFlow: SharedFlow<UiIntent> = _uiIntentFlow.asSharedFlow()
 
     private var currentNoteId: Int? = null
 
@@ -64,34 +63,34 @@ class AddEditNoteViewModel @Inject constructor(
         }
     }
 
-    fun onEvent(event: AddEditNoteEvent){
-        when(event){
-            is AddEditNoteEvent.ChangeColor -> {
-                _noteColor.value = event.color
+    fun onIntent(intent: ViewModelIntent){
+        when(intent){
+            is ViewModelIntent.ChangeColor -> {
+                _noteColor.value = intent.color
             }
-            is AddEditNoteEvent.ChangeContentFocus -> {
+            is ViewModelIntent.ChangeContentFocus -> {
                 _noteContent.value = noteContent.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
+                    isHintVisible = !intent.focusState.isFocused &&
                             noteContent.value.text.isBlank()
                 )
             }
-            is AddEditNoteEvent.ChangeTitleFocus ->{
+            is ViewModelIntent.ChangeTitleFocus ->{
                 _noteTitle.value = noteTitle.value.copy(
-                    isHintVisible = !event.focusState.isFocused &&
+                    isHintVisible = !intent.focusState.isFocused &&
                             noteTitle.value.text.isBlank()
                 )
             }
-            is AddEditNoteEvent.EnterContent -> {
+            is ViewModelIntent.EnterContent -> {
                 _noteContent.value = noteContent.value.copy(
-                    text = event.value
+                    text = intent.value
                 )
             }
-            is AddEditNoteEvent.EnterTitle -> {
+            is ViewModelIntent.EnterTitle -> {
                 _noteTitle.value = noteTitle.value.copy(
-                    text = event.value
+                    text = intent.value
                 )
             }
-            AddEditNoteEvent.SaveNote -> {
+            ViewModelIntent.SaveNote -> {
                 viewModelScope.launch {
                     try {
                         noteUseCases.addNote(
@@ -103,18 +102,14 @@ class AddEditNoteViewModel @Inject constructor(
                                 id = currentNoteId
                             )
                         )
-                        _eventFlow.emit(UiEvent.SaveNote)
+                        _uiIntentFlow.emit(UiIntent.SaveNote)
                     } catch (e: InvalidNoteException){
-                        _eventFlow.emit(UiEvent.ShowSnackbar(
+                        _uiIntentFlow.emit(UiIntent.ShowSnackbar(
                             message = e.message ?: "Couldn't Save Note"
                         ))
                     }
                 }
             }
         }
-    }
-    sealed class UiEvent{
-        data class ShowSnackbar(val message: String): UiEvent()
-        object SaveNote: UiEvent()
     }
 }

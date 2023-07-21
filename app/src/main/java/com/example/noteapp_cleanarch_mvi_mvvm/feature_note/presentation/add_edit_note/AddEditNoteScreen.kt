@@ -28,7 +28,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -67,13 +66,13 @@ fun AddEditNoteScreen(
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(true){
-        viewModel.eventFlow.collectLatest { uiEvent ->
-            when(uiEvent){
-                AddEditNoteViewModel.UiEvent.SaveNote -> {
+        viewModel.uiIntentFlow.collectLatest { uiIntent ->
+            when(uiIntent){
+                UiIntent.SaveNote ->{
                     navController.navigateUp()
                 }
-                is AddEditNoteViewModel.UiEvent.ShowSnackbar ->{
-                    snackbarHostState.showSnackbar(uiEvent.message)
+                is UiIntent.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(uiIntent.message)
                 }
             }
         }
@@ -83,7 +82,7 @@ fun AddEditNoteScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    viewModel.onEvent(AddEditNoteEvent.SaveNote)
+                    viewModel.onIntent(ViewModelIntent.SaveNote)
                 },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
@@ -129,7 +128,7 @@ fun AddEditNoteScreen(
                                         )
                                     )
                                 }
-                                viewModel.onEvent(AddEditNoteEvent.ChangeColor(colorInt))
+                                viewModel.onIntent(ViewModelIntent.ChangeColor(colorInt))
                             }
                     )
                 }
@@ -139,10 +138,10 @@ fun AddEditNoteScreen(
                 text = noteTitle.text,
                 hint = noteTitle.hint,
                 onValueChange = {
-                    viewModel.onEvent(AddEditNoteEvent.EnterTitle(it))
+                    viewModel.onIntent(ViewModelIntent.EnterTitle(it))
                 },
                 onFocusChange = {
-                    viewModel.onEvent(AddEditNoteEvent.ChangeTitleFocus(it))
+                    viewModel.onIntent(ViewModelIntent.ChangeTitleFocus(it))
                 },
                 isHintVisible = noteTitle.isHintVisible,
                 singleLine = true,
@@ -153,10 +152,10 @@ fun AddEditNoteScreen(
                 text = noteContent.text,
                 hint = noteContent.hint,
                 onValueChange = {
-                    viewModel.onEvent(AddEditNoteEvent.EnterContent(it))
+                    viewModel.onIntent(ViewModelIntent.EnterContent(it))
                 },
                 onFocusChange = {
-                    viewModel.onEvent(AddEditNoteEvent.ChangeContentFocus(it))
+                    viewModel.onIntent(ViewModelIntent.ChangeContentFocus(it))
                 },
                 isHintVisible = noteContent.isHintVisible,
                 singleLine = false,
