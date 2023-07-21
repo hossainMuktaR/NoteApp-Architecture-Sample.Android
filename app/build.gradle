@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace 'com.example.noteapp_cleanarch_mvi_mvvm'
+    namespace 'com.example.noteapp_architecture_sample'
     compileSdk 34
 
     defaultConfig {

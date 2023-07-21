@@ -1,4 +1,4 @@
-package com.example.noteapp_cleanarch_mvi_mvvm
+package com.example.noteapp_architecture_sample
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

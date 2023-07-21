@@ -1,4 +1,4 @@
-package com.example.noteapp_cleanarch_mvi_mvvm
+package com.example.noteapp_architecture_sample
 
 import org.junit.Test
 
