@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "NoteApp-Architecture-Sample"
-include ':app'
+include(":app")
