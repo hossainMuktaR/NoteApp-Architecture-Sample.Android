@@ -1,3 +1,4 @@
+
 plugins {
 
     alias(libs.plugins.com.android.application)
@@ -41,7 +42,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.8"
+        kotlinCompilerExtensionVersion = "1.5.1"
     }
 }
 
@@ -72,6 +73,7 @@ dependencies {
     // Dagger-Hilt
     implementation(libs.hilt.android)
     kapt(libs.hilt.compiler)
+    kapt(libs.hilt.android.compiler)
 
     // Room
     implementation(libs.room.runtime)
