@@ -1,10 +1,10 @@
 
 plugins {
-
     alias(libs.plugins.com.android.application)
     alias(libs.plugins.org.jetbrains.kotlin.android)
     alias(libs.plugins.com.google.dagger.hilt.android)
 
+    id(libs.plugins.google.devtools.ksp.get().pluginId)
     id(libs.plugins.kotlin.kapt.get().pluginId)
 }
 
@@ -77,7 +77,7 @@ dependencies {
 
     // Room
     implementation(libs.room.runtime)
-    kapt(libs.room.compiler)
+    ksp(libs.room.compiler)
 
     // Kotlin Extensions and Coroutines support for Room
     implementation(libs.room.ktx)
