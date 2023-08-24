@@ -28,6 +28,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -38,6 +39,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.noteapp_architecture_sample.feature_note.domain.add_edit_note_redux.AddEditNoteSideEffect
+import com.example.noteapp_architecture_sample.feature_note.domain.add_edit_note_redux.AddEditNoteAction
 import com.example.noteapp_architecture_sample.feature_note.domain.model.Note
 import com.example.noteapp_architecture_sample.feature_note.presentation.add_edit_note.components.TransparentHintTextField
 import kotlinx.coroutines.flow.collectLatest
@@ -50,9 +53,7 @@ fun AddEditNoteScreen(
     noteColor: Int,
     viewModel: AddEditNoteViewModel = hiltViewModel()
 ) {
-    val noteTitle = viewModel.noteTitle.value
-    val noteContent = viewModel.noteContent.value
-
+    val state = viewModel.state.collectAsState().value
 
     val snackbarHostState = remember {
         SnackbarHostState()
@@ -60,19 +61,19 @@ fun AddEditNoteScreen(
 
     val noteBackgroundAnimColor = remember {
         Animatable(
-            Color(if (noteColor != -1) noteColor else viewModel.noteColor.value)
+            Color(if (noteColor != -1) noteColor else state.noteColor)
         )
     }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(true){
-        viewModel.uiIntentFlow.collectLatest { uiIntent ->
-            when(uiIntent){
-                UiIntent.SaveNote ->{
+        viewModel.sideEffect.collectLatest { sideEffect ->
+            when(sideEffect){
+                AddEditNoteSideEffect.SaveNote ->{
                     navController.navigateUp()
                 }
-                is UiIntent.ShowSnackbar -> {
-                    snackbarHostState.showSnackbar(uiIntent.message)
+                is AddEditNoteSideEffect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(sideEffect.message)
                 }
             }
         }
@@ -82,7 +83,7 @@ fun AddEditNoteScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    viewModel.onIntent(ViewModelIntent.SaveNote)
+                    viewModel.saveNote()
                 },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
@@ -114,7 +115,7 @@ fun AddEditNoteScreen(
                             .background(color)
                             .border(
                                 width = 3.dp,
-                                color = if (colorInt == viewModel.noteColor.value) {
+                                color = if (colorInt == state.noteColor) {
                                     Color.Black
                                 } else Color.Transparent,
                                 shape = CircleShape
@@ -128,36 +129,41 @@ fun AddEditNoteScreen(
                                         )
                                     )
                                 }
-                                viewModel.onIntent(ViewModelIntent.ChangeColor(colorInt))
+                                viewModel.colorChanged(colorInt)
                             }
                     )
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
             TransparentHintTextField(
-                text = noteTitle.text,
-                hint = noteTitle.hint,
-                onValueChange = {
-                    viewModel.onIntent(ViewModelIntent.EnterTitle(it))
+                text = state.noteTitle,
+                hint = state.titleHint,
+                onValueChange = { value ->
+//                    viewModel.onIntent(AddEditNoteAction.EnterTitle(it))
+                                viewModel.titleChanged(value)
                 },
-                onFocusChange = {
-                    viewModel.onIntent(ViewModelIntent.ChangeTitleFocus(it))
+                onFocusChange = { focusState ->
+//                    viewModel.onIntent(AddEditNoteAction.ChangeTitleFocus(it))
+                                viewModel.titleFocusChanged(focusState, state.noteTitle)
                 },
-                isHintVisible = noteTitle.isHintVisible,
+
+                isHintVisible = state.isTitleHintVisible,
                 singleLine = true,
                 textStyle = MaterialTheme.typography.headlineSmall
             )
             Spacer(modifier = Modifier.height(16.dp))
             TransparentHintTextField(
-                text = noteContent.text,
-                hint = noteContent.hint,
-                onValueChange = {
-                    viewModel.onIntent(ViewModelIntent.EnterContent(it))
+                text = state.noteContent,
+                hint = state.contentHint,
+                onValueChange = { value ->
+//                    viewModel.onIntent(AddEditNoteAction.EnterContent(it))
+                                viewModel.contentChanged(value)
                 },
-                onFocusChange = {
-                    viewModel.onIntent(ViewModelIntent.ChangeContentFocus(it))
+                onFocusChange = { focusState ->
+//                    viewModel.onIntent(AddEditNoteAction.ChangeContentFocus(it))
+                                viewModel.contentFocusChanged(focusState, state.noteContent)
                 },
-                isHintVisible = noteContent.isHintVisible,
+                isHintVisible = state.isContentHintVisible,
                 singleLine = false,
                 textStyle = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.fillMaxHeight()

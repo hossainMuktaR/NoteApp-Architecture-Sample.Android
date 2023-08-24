@@ -25,12 +25,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -38,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.example.noteapp_architecture_sample.feature_note.domain.note_list_redux.NoteListSideEffect
 import com.example.noteapp_architecture_sample.feature_note.presentation.note_list.components.NoteItem
 import com.example.noteapp_architecture_sample.feature_note.presentation.note_list.components.OrderSection
 import com.example.noteapp_architecture_sample.feature_note.presentation.util.Screen
@@ -50,31 +53,36 @@ fun NoteListScreen(
     navController: NavController,
     viewModel: NoteListViewModel = hiltViewModel()
 ) {
-    val state = viewModel.state.value
+    val state = viewModel.state.collectAsState().value
     val scope = rememberCoroutineScope()
     val hostState = remember {
         SnackbarHostState()
     }
     LaunchedEffect(true) {
-        viewModel.uiIntentFlow.collectLatest { uiIntent ->
-            when (uiIntent) {
-                is UiIntent.GoNoteEditScreen -> {
+        viewModel.fetchOrderedList(state.noteOrder, initFetch = true)
+        viewModel.sideEffect.collectLatest { sideEffect ->
+            when (sideEffect) {
+                is NoteListSideEffect.GoNoteEditScreen -> {
                     navController.navigate(
                         Screen.AddEditNoteScreen.route +
-                                "?noteId=${uiIntent.noteId}&noteColor=${uiIntent.noteColor}"
+                                "?noteId=${sideEffect.noteId}&noteColor=${sideEffect.noteColor}"
                     )
                 }
 
-                is UiIntent.DeleteNote -> {
+                is NoteListSideEffect.DeleteNote -> {
                     scope.launch {
                         val result = hostState.showSnackbar(
-                            message = uiIntent.message,
-                            actionLabel = "Undo"
+                            message = sideEffect.message,
+                            actionLabel = "Undo",
+                            duration = SnackbarDuration.Short
                         )
                         if (result == SnackbarResult.ActionPerformed) {
-                            viewModel.onIntent(ViewModelIntent.RestoreNote)
+                            viewModel.restoreNote()
                         }
                     }
+                }
+                is NoteListSideEffect.NavigateAddNoteScreen -> {
+                    navController.navigate(Screen.AddEditNoteScreen.route)
                 }
             }
         }
@@ -84,7 +92,7 @@ fun NoteListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    navController.navigate(Screen.AddEditNoteScreen.route)
+                    viewModel.gotoAddNoteScreen()
                 },
                 containerColor = MaterialTheme.colorScheme.primary,
             ) {
@@ -107,7 +115,7 @@ fun NoteListScreen(
                 Text(text = "Your Note", style = MaterialTheme.typography.headlineMedium)
                 IconButton(
                     onClick = {
-                        viewModel.onIntent(ViewModelIntent.ToggleOrderSection)
+                        viewModel.toggleOrderSection()
                     },
                 ) {
                     Icon(
@@ -127,7 +135,7 @@ fun NoteListScreen(
                         .padding(vertical = 16.dp),
                     noteOrder = state.noteOrder,
                     onOrderChange = { selectedNoteOrder ->
-                        viewModel.onIntent(ViewModelIntent.Order(selectedNoteOrder))
+                        viewModel.fetchOrderedList(selectedNoteOrder)
                     }
                 )
             }
@@ -141,15 +149,10 @@ fun NoteListScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                viewModel.onIntent(
-                                    ViewModelIntent.GoNoteUpdateScreen(
-                                        note.id!!.toInt(),
-                                        note.color
-                                    )
-                                )
+                                viewModel.onNoteClicked(note)
                             },
                         onDeleteClick = {
-                            viewModel.onIntent(ViewModelIntent.DeleteNote(note))
+                            viewModel.deleteNote(note)
                         }
                     )
                     Spacer(modifier = Modifier.height(16.dp))

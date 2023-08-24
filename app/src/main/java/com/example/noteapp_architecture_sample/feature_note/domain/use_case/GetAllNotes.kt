@@ -10,23 +10,39 @@ import kotlinx.coroutines.flow.map
 class GetAllNotes(
     private val repository: NoteRepository
 ) {
-    operator fun invoke(
+    suspend operator fun invoke(
         noteOrder: NoteOrder
-    ): Flow<List<Note>> {
-        return repository.getAllNotes().map { notes ->
-            when(noteOrder.orderType){
-                is OrderType.Ascending -> {
-                    when(noteOrder){
-                        is NoteOrder.Title -> { notes.sortedBy { it.title }}
-                        is NoteOrder.Date -> { notes.sortedBy { it.timeStamp }}
-                        is NoteOrder.Color -> { notes.sortedBy { it.color }}
+    ): List<Note> {
+        val notes = repository.getAllNotes()
+        return when (noteOrder.orderType) {
+            is OrderType.Ascending -> {
+                when (noteOrder) {
+                    is NoteOrder.Title -> {
+                        notes.sortedBy { it.title }
+                    }
+
+                    is NoteOrder.Date -> {
+                        notes.sortedBy { it.timeStamp }
+                    }
+
+                    is NoteOrder.Color -> {
+                        notes.sortedBy { it.color }
                     }
                 }
-                is OrderType.Descending -> {
-                    when(noteOrder){
-                        is NoteOrder.Title -> { notes.sortedByDescending { it.title }}
-                        is NoteOrder.Date -> { notes.sortedByDescending { it.timeStamp }}
-                        is NoteOrder.Color -> { notes.sortedByDescending { it.color }}
+            }
+
+            is OrderType.Descending -> {
+                when (noteOrder) {
+                    is NoteOrder.Title -> {
+                        notes.sortedByDescending { it.title }
+                    }
+
+                    is NoteOrder.Date -> {
+                        notes.sortedByDescending { it.timeStamp }
+                    }
+
+                    is NoteOrder.Color -> {
+                        notes.sortedByDescending { it.color }
                     }
                 }
             }
