@@ -1,5 +1,11 @@
 package com.example.noteapp_architecture_sample.feature_note.redux
 
-interface Middleware {
-    suspend fun process(action: Action, currentState: State, container: Container)
+import android.view.WindowInsets.Side
+
+interface Middleware<A: Action, S: State, SE: SideEffect> {
+    suspend fun process(
+        action: A,
+        currentState: S,
+        container: Container<A, S, SE>,
+        )
 }
